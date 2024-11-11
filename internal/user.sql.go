@@ -62,3 +62,65 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 	)
 	return i, err
 }
+
+const getUserByEmail = `-- name: GetUserByEmail :one
+select id, created_at, updated_at, name, email, password, location, age, username, bio, role from users where email = $1
+`
+
+func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error) {
+	row := q.db.QueryRowContext(ctx, getUserByEmail, email)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Name,
+		&i.Email,
+		&i.Password,
+		&i.Location,
+		&i.Age,
+		&i.Username,
+		&i.Bio,
+		&i.Role,
+	)
+	return i, err
+}
+
+const getUserById = `-- name: GetUserById :one
+select id, created_at, updated_at, name, email, password, location, age, username, bio, role from users where id = $1
+`
+
+func (q *Queries) GetUserById(ctx context.Context, id uuid.UUID) (User, error) {
+	row := q.db.QueryRowContext(ctx, getUserById, id)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Name,
+		&i.Email,
+		&i.Password,
+		&i.Location,
+		&i.Age,
+		&i.Username,
+		&i.Bio,
+		&i.Role,
+	)
+	return i, err
+}
+
+const isAdmin = `-- name: IsAdmin :one
+select
+case
+    when count(*) = 0 then true
+    else false
+end as user_count
+from users
+`
+
+func (q *Queries) IsAdmin(ctx context.Context) (bool, error) {
+	row := q.db.QueryRowContext(ctx, isAdmin)
+	var user_count bool
+	err := row.Scan(&user_count)
+	return user_count, err
+}

@@ -13,7 +13,8 @@ import (
 )
 
 type apiConfig struct {
-	db *internal.Queries
+	db         *internal.Queries
+	jwt_secret string
 }
 
 func main() {
@@ -24,12 +25,16 @@ func main() {
 		return
 	}
 
-	apiCfg := apiConfig{}
-
 	port := os.Getenv("PORT")
 	if port == "" {
 		log.Panicln("no port in env file")
 		return
+	}
+
+	secret := os.Getenv("JWT_SECRET")
+
+	apiCfg := &apiConfig{
+		jwt_secret: secret,
 	}
 
 	conn_url := os.Getenv("CONN_URL")
@@ -49,6 +54,16 @@ func main() {
 
 	// create a main router
 	mainRouter := chi.NewRouter()
+
+	// create a sub router
+	apiRouter := chi.NewRouter()
+
+	// user
+	apiRouter.Post("/register", apiCfg.register)
+	apiRouter.Post("/login", apiCfg.login)
+
+	// mount
+	mainRouter.Mount("/api/v1", apiRouter)
 
 	// create a new server from http.Server type
 	the_server := &http.Server{
