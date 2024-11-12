@@ -55,6 +55,39 @@ func (ns NullUserType) Value() (driver.Value, error) {
 	return string(ns.UserType), nil
 }
 
+type Comment struct {
+	ID        uuid.UUID
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	Comment   string
+	Userid    uuid.UUID
+	Postid    uuid.UUID
+}
+
+type Follow struct {
+	ID        uuid.UUID
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	Person    uuid.UUID
+	Follower  uuid.UUID
+}
+
+type Like struct {
+	ID        uuid.UUID
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	Userid    uuid.UUID
+	Postid    uuid.UUID
+}
+
+type Post struct {
+	ID        uuid.UUID
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	Content   string
+	Author    uuid.UUID
+}
+
 type User struct {
 	ID        uuid.UUID
 	CreatedAt time.Time
