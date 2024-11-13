@@ -62,6 +62,14 @@ func main() {
 	apiRouter.Post("/register", apiCfg.register)
 	apiRouter.Post("/login", apiCfg.login)
 
+	// posts
+	apiRouter.Post("/createposts", apiCfg.authChecker(apiCfg.CreatePosts))
+	apiRouter.Get("/getsinglepost/{postID}", apiCfg.GetSinglePost)
+	apiRouter.Delete("/deleteposts/{postID}", apiCfg.authChecker(apiCfg.DeletePost))
+	apiRouter.Put("/updateposts/{postID}", apiCfg.authChecker(apiCfg.UpdatePost))
+	apiRouter.Get("/getpostsuggestions", apiCfg.authChecker(apiCfg.PostSuggestion))
+	apiRouter.Get("/getpostsbyuser", apiCfg.authChecker(apiCfg.GetPostsByUser))
+
 	// mount
 	mainRouter.Mount("/api/v1", apiRouter)
 
