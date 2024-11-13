@@ -15,7 +15,7 @@ import (
 const createPosts = `-- name: CreatePosts :one
 insert into posts(id, created_at, updated_at, content, author)
 values ($1, $2, $3, $4, $5)
-returning id, created_at, updated_at, content, author
+returning id, created_at, updated_at, content, author, likes, comments
 `
 
 type CreatePostsParams struct {
@@ -41,13 +41,15 @@ func (q *Queries) CreatePosts(ctx context.Context, arg CreatePostsParams) (Post,
 		&i.UpdatedAt,
 		&i.Content,
 		&i.Author,
+		&i.Likes,
+		&i.Comments,
 	)
 	return i, err
 }
 
 const deletePost = `-- name: DeletePost :one
 delete from posts where id = $1 and author = $2
-returning id, created_at, updated_at, content, author
+returning id, created_at, updated_at, content, author, likes, comments
 `
 
 type DeletePostParams struct {
@@ -64,12 +66,14 @@ func (q *Queries) DeletePost(ctx context.Context, arg DeletePostParams) (Post, e
 		&i.UpdatedAt,
 		&i.Content,
 		&i.Author,
+		&i.Likes,
+		&i.Comments,
 	)
 	return i, err
 }
 
 const getPostById = `-- name: GetPostById :one
-select id, created_at, updated_at, content, author from posts where id = $1
+select id, created_at, updated_at, content, author, likes, comments from posts where id = $1
 `
 
 func (q *Queries) GetPostById(ctx context.Context, id uuid.UUID) (Post, error) {
@@ -81,12 +85,14 @@ func (q *Queries) GetPostById(ctx context.Context, id uuid.UUID) (Post, error) {
 		&i.UpdatedAt,
 		&i.Content,
 		&i.Author,
+		&i.Likes,
+		&i.Comments,
 	)
 	return i, err
 }
 
 const getPostsByIUser = `-- name: GetPostsByIUser :many
-select id, created_at, updated_at, content, author from posts 
+select id, created_at, updated_at, content, author, likes, comments from posts 
 where author = $1
 limit $2 offset $3
 `
@@ -112,6 +118,8 @@ func (q *Queries) GetPostsByIUser(ctx context.Context, arg GetPostsByIUserParams
 			&i.UpdatedAt,
 			&i.Content,
 			&i.Author,
+			&i.Likes,
+			&i.Comments,
 		); err != nil {
 			return nil, err
 		}
@@ -126,8 +134,64 @@ func (q *Queries) GetPostsByIUser(ctx context.Context, arg GetPostsByIUserParams
 	return items, nil
 }
 
+const handlePostComments = `-- name: HandlePostComments :one
+update posts
+set updated_at = NOW(),
+comments = greatest(0, comments + $1)
+where id = $2
+returning id, created_at, updated_at, content, author, likes, comments
+`
+
+type HandlePostCommentsParams struct {
+	Comments int32
+	ID       uuid.UUID
+}
+
+func (q *Queries) HandlePostComments(ctx context.Context, arg HandlePostCommentsParams) (Post, error) {
+	row := q.db.QueryRowContext(ctx, handlePostComments, arg.Comments, arg.ID)
+	var i Post
+	err := row.Scan(
+		&i.ID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Content,
+		&i.Author,
+		&i.Likes,
+		&i.Comments,
+	)
+	return i, err
+}
+
+const handlePostLike = `-- name: HandlePostLike :one
+update posts
+set updated_at = NOW(),
+likes = greatest(0, likes + $1)
+where id = $2
+returning id, created_at, updated_at, content, author, likes, comments
+`
+
+type HandlePostLikeParams struct {
+	Likes int32
+	ID    uuid.UUID
+}
+
+func (q *Queries) HandlePostLike(ctx context.Context, arg HandlePostLikeParams) (Post, error) {
+	row := q.db.QueryRowContext(ctx, handlePostLike, arg.Likes, arg.ID)
+	var i Post
+	err := row.Scan(
+		&i.ID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Content,
+		&i.Author,
+		&i.Likes,
+		&i.Comments,
+	)
+	return i, err
+}
+
 const postSuggestions = `-- name: PostSuggestions :many
-select id, created_at, updated_at, content, author from posts
+select id, created_at, updated_at, content, author, likes, comments from posts
 where author in (
     select person from follows
     where follower = $1
@@ -157,6 +221,8 @@ func (q *Queries) PostSuggestions(ctx context.Context, arg PostSuggestionsParams
 			&i.UpdatedAt,
 			&i.Content,
 			&i.Author,
+			&i.Likes,
+			&i.Comments,
 		); err != nil {
 			return nil, err
 		}
@@ -176,7 +242,7 @@ update posts
 set updated_at = NOW(),
 content = $1
 where id = $2 and author = $3
-returning id, created_at, updated_at, content, author
+returning id, created_at, updated_at, content, author, likes, comments
 `
 
 type UpdatePostParams struct {
@@ -194,6 +260,8 @@ func (q *Queries) UpdatePost(ctx context.Context, arg UpdatePostParams) (Post, e
 		&i.UpdatedAt,
 		&i.Content,
 		&i.Author,
+		&i.Likes,
+		&i.Comments,
 	)
 	return i, err
 }

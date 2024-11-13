@@ -86,6 +86,8 @@ type Post struct {
 	UpdatedAt time.Time
 	Content   string
 	Author    uuid.UUID
+	Likes     int32
+	Comments  int32
 }
 
 type User struct {

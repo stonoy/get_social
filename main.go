@@ -70,6 +70,15 @@ func main() {
 	apiRouter.Get("/getpostsuggestions", apiCfg.authChecker(apiCfg.PostSuggestion))
 	apiRouter.Get("/getpostsbyuser", apiCfg.authChecker(apiCfg.GetPostsByUser))
 
+	// likes
+	apiRouter.Get("/addlike/{postID}", apiCfg.authChecker(apiCfg.LikeAPost))
+	apiRouter.Get("/removelike/{postID}", apiCfg.authChecker(apiCfg.RemoveLike))
+
+	// comments
+	apiRouter.Post("/createcomments", apiCfg.authChecker(apiCfg.CreateComment))
+	apiRouter.Delete("/deletecomments/{commentID}", apiCfg.authChecker(apiCfg.DeleteComment))
+	apiRouter.Put("/updatecomments/{commentID}", apiCfg.authChecker(apiCfg.UpdateComment))
+
 	// mount
 	mainRouter.Mount("/api/v1", apiRouter)
 

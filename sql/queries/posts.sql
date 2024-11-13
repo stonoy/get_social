@@ -30,3 +30,17 @@ where author in (
 )
 order by created_at
 limit $2 offset $3;
+
+-- name: HandlePostLike :one
+update posts
+set updated_at = NOW(),
+likes = greatest(0, likes + $1)
+where id = $2
+returning *;
+
+-- name: HandlePostComments :one
+update posts
+set updated_at = NOW(),
+comments = greatest(0, comments + $1)
+where id = $2
+returning *;

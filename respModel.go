@@ -28,6 +28,15 @@ type Post struct {
 	Author    uuid.UUID `json:"author"`
 }
 
+type Comment struct {
+	ID        uuid.UUID `json:"id"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+	Comment   string    `json:"comment"`
+	Userid    uuid.UUID `json:"user_id"`
+	Postid    uuid.UUID `json:"post_id"`
+}
+
 func postDbToResp(posts []internal.Post) []Post {
 	final := []Post{}
 
