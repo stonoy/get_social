@@ -189,11 +189,13 @@ func (cfg *apiConfig) PostSuggestion(w http.ResponseWriter, r *http.Request, use
 
 	// set default queries
 	page := 1
+	startTime := time.Now().AddDate(-1, 0, 0)
+	endTime := time.Now().AddDate(1, 0, 0)
 
 	// update quries from url
 	pageStr := queries.Get("page")
 	if pageStr != "" {
-		pageInt, err := strconv.Atoi("page")
+		pageInt, err := strconv.Atoi(pageStr)
 		if err != nil {
 			respWithError(w, 400, fmt.Sprintf("error in converting str to int page -> %v", err))
 			return
@@ -202,13 +204,37 @@ func (cfg *apiConfig) PostSuggestion(w http.ResponseWriter, r *http.Request, use
 		page = pageInt
 	}
 
+	startTimeQ := queries.Get("startTime")
+	if startTimeQ != "" {
+		// parse time
+		theTime, err := GetTimeFromStr(startTimeQ)
+		if err != nil {
+			respWithError(w, 400, fmt.Sprintf("error in GetTimeFromStr -> %v", err))
+			return
+		}
+		startTime = theTime
+	}
+
+	endTimeQ := queries.Get("endTime")
+	if endTimeQ != "" {
+		// parse time
+		theTime, err := GetTimeFromStr(endTimeQ)
+		if err != nil {
+			respWithError(w, 400, fmt.Sprintf("error in GetTimeFromStr -> %v", err))
+			return
+		}
+		endTime = theTime
+	}
+
 	limit := 2
 	offset := (page - 1) * limit
 
 	posts, err := cfg.db.PostSuggestions(r.Context(), internal.PostSuggestionsParams{
-		Follower: user.ID,
-		Limit:    int32(limit),
-		Offset:   int32(offset),
+		Follower:    user.ID,
+		Limit:       int32(limit),
+		Offset:      int32(offset),
+		CreatedAt:   startTime,
+		CreatedAt_2: endTime,
 	})
 	if err != nil {
 		if err == sql.ErrNoRows {

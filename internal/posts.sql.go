@@ -195,19 +195,27 @@ select id, created_at, updated_at, content, author, likes, comments from posts
 where author in (
     select person from follows
     where follower = $1
-)
-order by created_at
-limit $2 offset $3
+) and posts.created_at between $2 and $3
+order by posts.updated_at
+limit $4 offset $5
 `
 
 type PostSuggestionsParams struct {
-	Follower uuid.UUID
-	Limit    int32
-	Offset   int32
+	Follower    uuid.UUID
+	CreatedAt   time.Time
+	CreatedAt_2 time.Time
+	Limit       int32
+	Offset      int32
 }
 
 func (q *Queries) PostSuggestions(ctx context.Context, arg PostSuggestionsParams) ([]Post, error) {
-	rows, err := q.db.QueryContext(ctx, postSuggestions, arg.Follower, arg.Limit, arg.Offset)
+	rows, err := q.db.QueryContext(ctx, postSuggestions,
+		arg.Follower,
+		arg.CreatedAt,
+		arg.CreatedAt_2,
+		arg.Limit,
+		arg.Offset,
+	)
 	if err != nil {
 		return nil, err
 	}

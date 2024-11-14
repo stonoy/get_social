@@ -61,6 +61,9 @@ func main() {
 	// user
 	apiRouter.Post("/register", apiCfg.register)
 	apiRouter.Post("/login", apiCfg.login)
+	apiRouter.Get("/getusers", apiCfg.GetUsers)
+	apiRouter.Put("/updateusers", apiCfg.authChecker(apiCfg.UpdateUsers))
+	apiRouter.Get("/getusersdetails/{userID}", apiCfg.GetSingleUserDetails)
 
 	// posts
 	apiRouter.Post("/createposts", apiCfg.authChecker(apiCfg.CreatePosts))

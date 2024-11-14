@@ -16,3 +16,18 @@ select * from users where email = $1;
 
 -- name: GetUserById :one
 select * from users where id = $1;
+
+-- name: UpdateUserDetails :one
+update users
+set updated_at = NOW(),
+name = $1,
+location = $2,
+age = $3,
+username = $4,
+bio = $5
+where id = $6
+returning *;
+
+-- name: GetUsers :many
+select * from users
+where (name like $1) and (location like $2);

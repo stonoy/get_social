@@ -16,3 +16,17 @@ where follows.follower != $1
 group by users.id
 limit 3;
 
+-- name: PersonsIFollow :many
+select users.id, users.name 
+from follows
+inner join users
+on follows.person = users.id
+where follower = $1;
+
+-- name: MyFollowers :many
+select users.id, users.name 
+from follows
+inner join users
+on follows.follower = users.id
+where person = $1;
+

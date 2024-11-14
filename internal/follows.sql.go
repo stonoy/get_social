@@ -84,6 +84,78 @@ func (q *Queries) FollowSuggestions(ctx context.Context, follower uuid.UUID) ([]
 	return items, nil
 }
 
+const myFollowers = `-- name: MyFollowers :many
+select users.id, users.name 
+from follows
+inner join users
+on follows.follower = users.id
+where person = $1
+`
+
+type MyFollowersRow struct {
+	ID   uuid.UUID
+	Name string
+}
+
+func (q *Queries) MyFollowers(ctx context.Context, person uuid.UUID) ([]MyFollowersRow, error) {
+	rows, err := q.db.QueryContext(ctx, myFollowers, person)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []MyFollowersRow
+	for rows.Next() {
+		var i MyFollowersRow
+		if err := rows.Scan(&i.ID, &i.Name); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const personsIFollow = `-- name: PersonsIFollow :many
+select users.id, users.name 
+from follows
+inner join users
+on follows.person = users.id
+where follower = $1
+`
+
+type PersonsIFollowRow struct {
+	ID   uuid.UUID
+	Name string
+}
+
+func (q *Queries) PersonsIFollow(ctx context.Context, follower uuid.UUID) ([]PersonsIFollowRow, error) {
+	rows, err := q.db.QueryContext(ctx, personsIFollow, follower)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []PersonsIFollowRow
+	for rows.Next() {
+		var i PersonsIFollowRow
+		if err := rows.Scan(&i.ID, &i.Name); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const unfollow = `-- name: Unfollow :one
 delete from follows where person = $1 and follower = $2
 returning id, created_at, updated_at, person, follower

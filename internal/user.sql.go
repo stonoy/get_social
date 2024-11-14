@@ -109,6 +109,51 @@ func (q *Queries) GetUserById(ctx context.Context, id uuid.UUID) (User, error) {
 	return i, err
 }
 
+const getUsers = `-- name: GetUsers :many
+select id, created_at, updated_at, name, email, password, location, age, username, bio, role from users
+where (name like $1) and (location like $2)
+`
+
+type GetUsersParams struct {
+	Name     string
+	Location string
+}
+
+func (q *Queries) GetUsers(ctx context.Context, arg GetUsersParams) ([]User, error) {
+	rows, err := q.db.QueryContext(ctx, getUsers, arg.Name, arg.Location)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []User
+	for rows.Next() {
+		var i User
+		if err := rows.Scan(
+			&i.ID,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.Name,
+			&i.Email,
+			&i.Password,
+			&i.Location,
+			&i.Age,
+			&i.Username,
+			&i.Bio,
+			&i.Role,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const isAdmin = `-- name: IsAdmin :one
 select
 case
@@ -123,4 +168,51 @@ func (q *Queries) IsAdmin(ctx context.Context) (bool, error) {
 	var user_count bool
 	err := row.Scan(&user_count)
 	return user_count, err
+}
+
+const updateUserDetails = `-- name: UpdateUserDetails :one
+update users
+set updated_at = NOW(),
+name = $1,
+location = $2,
+age = $3,
+username = $4,
+bio = $5
+where id = $6
+returning id, created_at, updated_at, name, email, password, location, age, username, bio, role
+`
+
+type UpdateUserDetailsParams struct {
+	Name     string
+	Location string
+	Age      int32
+	Username string
+	Bio      string
+	ID       uuid.UUID
+}
+
+func (q *Queries) UpdateUserDetails(ctx context.Context, arg UpdateUserDetailsParams) (User, error) {
+	row := q.db.QueryRowContext(ctx, updateUserDetails,
+		arg.Name,
+		arg.Location,
+		arg.Age,
+		arg.Username,
+		arg.Bio,
+		arg.ID,
+	)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Name,
+		&i.Email,
+		&i.Password,
+		&i.Location,
+		&i.Age,
+		&i.Username,
+		&i.Bio,
+		&i.Role,
+	)
+	return i, err
 }

@@ -51,6 +51,16 @@ type FollowSuggestions struct {
 	Followers int64     `json:"followers"`
 }
 
+type PersonsIFollowRow struct {
+	UserId uuid.UUID `json:"user_id"`
+	Name   string    `json:"name"`
+}
+
+type MyFollowersRow struct {
+	UserId uuid.UUID `json:"user_id"`
+	Name   string    `json:"name"`
+}
+
 func postDbToResp(posts []internal.Post) []Post {
 	final := []Post{}
 
@@ -90,6 +100,53 @@ func followSuggestionsDbToResp(suggestions []internal.FollowSuggestionsRow) []Fo
 			PersonId:  suggestion.ID,
 			Name:      suggestion.Name,
 			Followers: suggestion.Followers,
+		})
+	}
+
+	return final
+}
+
+func UserDbToResp(users []internal.User) []User {
+	final := []User{}
+
+	for _, user := range users {
+		final = append(final, User{
+			ID:        user.ID,
+			CreatedAt: user.CreatedAt,
+			UpdatedAt: user.UpdatedAt,
+			Name:      user.Name,
+			Email:     user.Email,
+			Username:  user.Username,
+			Location:  user.Location,
+			Age:       user.Age,
+			Bio:       user.Bio,
+			Role:      string(user.Role),
+		})
+	}
+
+	return final
+}
+
+func personsDbToResp(details []internal.PersonsIFollowRow) []PersonsIFollowRow {
+	final := []PersonsIFollowRow{}
+
+	for _, detail := range details {
+		final = append(final, PersonsIFollowRow{
+			UserId: detail.ID,
+			Name:   detail.Name,
+		})
+	}
+
+	return final
+}
+
+func followersDbToResp(details []internal.MyFollowersRow) []MyFollowersRow {
+	final := []MyFollowersRow{}
+
+	for _, detail := range details {
+		final = append(final, MyFollowersRow{
+			UserId: detail.ID,
+			Name:   detail.Name,
 		})
 	}
 

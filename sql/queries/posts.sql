@@ -27,9 +27,9 @@ select * from posts
 where author in (
     select person from follows
     where follower = $1
-)
-order by created_at
-limit $2 offset $3;
+) and posts.created_at between $2 and $3
+order by posts.updated_at
+limit $4 offset $5;
 
 -- name: HandlePostLike :one
 update posts
