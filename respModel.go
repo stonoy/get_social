@@ -37,6 +37,20 @@ type Comment struct {
 	Postid    uuid.UUID `json:"post_id"`
 }
 
+type PostComments struct {
+	ID      uuid.UUID `json:"id"`
+	Comment string    `json:"comment"`
+	Postid  uuid.UUID `json:"post_id"`
+	UserId  uuid.UUID `json:"user_id"`
+	Name    string    `json:"name"`
+}
+
+type FollowSuggestions struct {
+	PersonId  uuid.UUID `json:"person_id"`
+	Name      string    `json:"name"`
+	Followers int64     `json:"followers"`
+}
+
 func postDbToResp(posts []internal.Post) []Post {
 	final := []Post{}
 
@@ -49,5 +63,35 @@ func postDbToResp(posts []internal.Post) []Post {
 			Author:    post.Author,
 		})
 	}
+	return final
+}
+
+func commentDbToResp(comments []internal.GetCommentsPostRow) []PostComments {
+	final := []PostComments{}
+
+	for _, comment := range comments {
+		final = append(final, PostComments{
+			ID:      comment.ID,
+			Comment: comment.Comment,
+			Postid:  comment.Postid,
+			UserId:  comment.Postid,
+			Name:    comment.Name,
+		})
+	}
+
+	return final
+}
+
+func followSuggestionsDbToResp(suggestions []internal.FollowSuggestionsRow) []FollowSuggestions {
+	final := []FollowSuggestions{}
+
+	for _, suggestion := range suggestions {
+		final = append(final, FollowSuggestions{
+			PersonId:  suggestion.ID,
+			Name:      suggestion.Name,
+			Followers: suggestion.Followers,
+		})
+	}
+
 	return final
 }

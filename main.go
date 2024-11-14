@@ -78,6 +78,12 @@ func main() {
 	apiRouter.Post("/createcomments", apiCfg.authChecker(apiCfg.CreateComment))
 	apiRouter.Delete("/deletecomments/{commentID}", apiCfg.authChecker(apiCfg.DeleteComment))
 	apiRouter.Put("/updatecomments/{commentID}", apiCfg.authChecker(apiCfg.UpdateComment))
+	apiRouter.Get("/getpostcomments/{postID}", apiCfg.GetPostComments)
+
+	// follows
+	apiRouter.Post("/followpersons", apiCfg.authChecker(apiCfg.Follow))
+	apiRouter.Delete("/unfollowpersons/{personID}", apiCfg.authChecker(apiCfg.Unfollow))
+	apiRouter.Get("/followsuggestions", apiCfg.authChecker(apiCfg.FollowSuggestions))
 
 	// mount
 	mainRouter.Mount("/api/v1", apiRouter)

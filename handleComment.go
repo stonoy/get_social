@@ -43,6 +43,21 @@ func (cfg *apiConfig) CreateComment(w http.ResponseWriter, r *http.Request, user
 		return
 	}
 
+	// update post comment count
+	_, err = cfg.db.HandlePostComments(r.Context(), internal.HandlePostCommentsParams{
+		Comments: 1,
+		ID:       postId,
+	})
+	if err != nil {
+		if err == sql.ErrNoRows {
+			respWithError(w, 400, "No such post exist")
+			return
+		} else {
+			respWithError(w, 500, fmt.Sprintf("error in HandlePostComments -> %v", err))
+			return
+		}
+	}
+
 	type respStruct struct {
 		Success bool    `json:"success"`
 		Comment Comment `json:"comment"`
@@ -70,7 +85,7 @@ func (cfg *apiConfig) DeleteComment(w http.ResponseWriter, r *http.Request, user
 		return
 	}
 
-	_, err = cfg.db.DeleteComment(r.Context(), internal.DeleteCommentParams{
+	comment, err := cfg.db.DeleteComment(r.Context(), internal.DeleteCommentParams{
 		ID:     commentId,
 		Userid: user.ID,
 	})
@@ -80,6 +95,21 @@ func (cfg *apiConfig) DeleteComment(w http.ResponseWriter, r *http.Request, user
 			return
 		} else {
 			respWithError(w, 500, fmt.Sprintf("error in DeleteComment -> %v", err))
+			return
+		}
+	}
+
+	// update post comment count
+	_, err = cfg.db.HandlePostComments(r.Context(), internal.HandlePostCommentsParams{
+		Comments: -1,
+		ID:       comment.Postid,
+	})
+	if err != nil {
+		if err == sql.ErrNoRows {
+			respWithError(w, 400, "No such post exist")
+			return
+		} else {
+			respWithError(w, 500, fmt.Sprintf("error in HandlePostComments -> %v", err))
 			return
 		}
 	}
@@ -142,5 +172,34 @@ func (cfg *apiConfig) UpdateComment(w http.ResponseWriter, r *http.Request, user
 			Userid:    updatedComment.Userid,
 			Postid:    updatedComment.Postid,
 		},
+	})
+}
+
+func (cfg *apiConfig) GetPostComments(w http.ResponseWriter, r *http.Request) {
+	postIdStr := chi.URLParam(r, "postID")
+
+	postId, err := uuid.Parse(postIdStr)
+	if err != nil {
+		respWithError(w, 400, fmt.Sprintf("error in parsing uuid -> %v", err))
+		return
+	}
+
+	comments, err := cfg.db.GetCommentsPost(r.Context(), postId)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			respWithError(w, 400, "No comment exist")
+			return
+		} else {
+			respWithError(w, 500, fmt.Sprintf("error in GetCommentsPost -> %v", err))
+			return
+		}
+	}
+
+	type respStruct struct {
+		Comments []PostComments `json:"comments"`
+	}
+
+	respWithJson(w, 200, respStruct{
+		Comments: commentDbToResp(comments),
 	})
 }
