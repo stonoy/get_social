@@ -72,13 +72,38 @@ func (q *Queries) DeletePost(ctx context.Context, arg DeletePostParams) (Post, e
 	return i, err
 }
 
-const getPostById = `-- name: GetPostById :one
-select id, created_at, updated_at, content, author, likes, comments from posts where id = $1
+const getNumPostsByIUser = `-- name: GetNumPostsByIUser :one
+select count(*) from posts where author = $1
 `
 
-func (q *Queries) GetPostById(ctx context.Context, id uuid.UUID) (Post, error) {
+func (q *Queries) GetNumPostsByIUser(ctx context.Context, author uuid.UUID) (int64, error) {
+	row := q.db.QueryRowContext(ctx, getNumPostsByIUser, author)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const getPostById = `-- name: GetPostById :one
+select posts.id, posts.created_at, posts.updated_at, posts.content, posts.author, posts.likes, posts.comments, users.name from posts
+inner join users
+on posts.author = users.id
+where posts.id = $1
+`
+
+type GetPostByIdRow struct {
+	ID        uuid.UUID
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	Content   string
+	Author    uuid.UUID
+	Likes     int32
+	Comments  int32
+	Name      string
+}
+
+func (q *Queries) GetPostById(ctx context.Context, id uuid.UUID) (GetPostByIdRow, error) {
 	row := q.db.QueryRowContext(ctx, getPostById, id)
-	var i Post
+	var i GetPostByIdRow
 	err := row.Scan(
 		&i.ID,
 		&i.CreatedAt,
@@ -87,13 +112,17 @@ func (q *Queries) GetPostById(ctx context.Context, id uuid.UUID) (Post, error) {
 		&i.Author,
 		&i.Likes,
 		&i.Comments,
+		&i.Name,
 	)
 	return i, err
 }
 
 const getPostsByIUser = `-- name: GetPostsByIUser :many
-select id, created_at, updated_at, content, author, likes, comments from posts 
-where author = $1
+select posts.id, posts.created_at, posts.updated_at, posts.content, posts.author, posts.likes, posts.comments, users.name from posts
+inner join users
+on posts.author = users.id
+where posts.author = $1
+order by posts.created_at desc
 limit $2 offset $3
 `
 
@@ -103,15 +132,26 @@ type GetPostsByIUserParams struct {
 	Offset int32
 }
 
-func (q *Queries) GetPostsByIUser(ctx context.Context, arg GetPostsByIUserParams) ([]Post, error) {
+type GetPostsByIUserRow struct {
+	ID        uuid.UUID
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	Content   string
+	Author    uuid.UUID
+	Likes     int32
+	Comments  int32
+	Name      string
+}
+
+func (q *Queries) GetPostsByIUser(ctx context.Context, arg GetPostsByIUserParams) ([]GetPostsByIUserRow, error) {
 	rows, err := q.db.QueryContext(ctx, getPostsByIUser, arg.Author, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Post
+	var items []GetPostsByIUserRow
 	for rows.Next() {
-		var i Post
+		var i GetPostsByIUserRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.CreatedAt,
@@ -120,6 +160,7 @@ func (q *Queries) GetPostsByIUser(ctx context.Context, arg GetPostsByIUserParams
 			&i.Author,
 			&i.Likes,
 			&i.Comments,
+			&i.Name,
 		); err != nil {
 			return nil, err
 		}
@@ -190,13 +231,30 @@ func (q *Queries) HandlePostLike(ctx context.Context, arg HandlePostLikeParams) 
 	return i, err
 }
 
-const postSuggestions = `-- name: PostSuggestions :many
-select id, created_at, updated_at, content, author, likes, comments from posts
+const numPostSuggestions = `-- name: NumPostSuggestions :one
+select count(*) from posts
 where author in (
     select person from follows
     where follower = $1
+)
+`
+
+func (q *Queries) NumPostSuggestions(ctx context.Context, follower uuid.UUID) (int64, error) {
+	row := q.db.QueryRowContext(ctx, numPostSuggestions, follower)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const postSuggestions = `-- name: PostSuggestions :many
+select posts.id, posts.created_at, posts.updated_at, posts.content, posts.author, posts.likes, posts.comments, users.name from posts
+inner join users
+on posts.author = users.id
+where posts.author in (
+    select person from follows
+    where follower = $1
 ) and posts.created_at between $2 and $3
-order by posts.updated_at
+order by posts.created_at desc
 limit $4 offset $5
 `
 
@@ -208,7 +266,18 @@ type PostSuggestionsParams struct {
 	Offset      int32
 }
 
-func (q *Queries) PostSuggestions(ctx context.Context, arg PostSuggestionsParams) ([]Post, error) {
+type PostSuggestionsRow struct {
+	ID        uuid.UUID
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	Content   string
+	Author    uuid.UUID
+	Likes     int32
+	Comments  int32
+	Name      string
+}
+
+func (q *Queries) PostSuggestions(ctx context.Context, arg PostSuggestionsParams) ([]PostSuggestionsRow, error) {
 	rows, err := q.db.QueryContext(ctx, postSuggestions,
 		arg.Follower,
 		arg.CreatedAt,
@@ -220,9 +289,9 @@ func (q *Queries) PostSuggestions(ctx context.Context, arg PostSuggestionsParams
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Post
+	var items []PostSuggestionsRow
 	for rows.Next() {
-		var i Post
+		var i PostSuggestionsRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.CreatedAt,
@@ -231,6 +300,7 @@ func (q *Queries) PostSuggestions(ctx context.Context, arg PostSuggestionsParams
 			&i.Author,
 			&i.Likes,
 			&i.Comments,
+			&i.Name,
 		); err != nil {
 			return nil, err
 		}

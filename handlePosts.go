@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"math"
 	"net/http"
 	"strconv"
 	"time"
@@ -76,16 +77,17 @@ func (cfg *apiConfig) GetSinglePost(w http.ResponseWriter, r *http.Request) {
 	}
 
 	type respStruct struct {
-		Post Post `json:"post"`
+		Post PostWithUser `json:"post"`
 	}
 
 	respWithJson(w, 201, respStruct{
-		Post: Post{
+		Post: PostWithUser{
 			ID:        post.ID,
 			CreatedAt: post.CreatedAt,
 			UpdatedAt: post.UpdatedAt,
 			Content:   post.Content,
 			Author:    post.Author,
+			Name:      post.Name,
 		},
 	})
 }
@@ -246,12 +248,24 @@ func (cfg *apiConfig) PostSuggestion(w http.ResponseWriter, r *http.Request, use
 		}
 	}
 
+	numOfPosts, err := cfg.db.NumPostSuggestions(r.Context(), user.ID)
+	if err != nil {
+		respWithError(w, 500, fmt.Sprintf("error in NumPostSuggestions -> %v", err))
+		return
+	}
+
+	numOfPages := math.Ceil(float64(numOfPosts) / float64(limit))
+
 	type respStruct struct {
-		Posts []Post `json:"posts"`
+		Posts      []PostWithUser `json:"posts"`
+		NumOfPages float64        `json:"numOfPages"`
+		Page       int            `json:"page"`
 	}
 
 	respWithJson(w, 200, respStruct{
-		Posts: postDbToResp(posts),
+		Posts:      postDbToResp2(posts),
+		NumOfPages: numOfPages,
+		Page:       page,
 	})
 }
 
@@ -292,11 +306,23 @@ func (cfg *apiConfig) GetPostsByUser(w http.ResponseWriter, r *http.Request, use
 		}
 	}
 
+	numOfPosts, err := cfg.db.GetNumPostsByIUser(r.Context(), user.ID)
+	if err != nil {
+		respWithError(w, 500, fmt.Sprintf("error in GetNumPostsByIUser -> %v", err))
+		return
+	}
+
+	numOfPages := math.Ceil(float64(numOfPosts) / float64(limit))
+
 	type respStruct struct {
-		Posts []Post `json:"posts"`
+		Posts      []PostWithUser `json:"posts"`
+		NumOfPages float64        `json:"numOfPages"`
+		Page       int            `json:"page"`
 	}
 
 	respWithJson(w, 200, respStruct{
-		Posts: postDbToResp(posts),
+		Posts:      postDbToResp1(posts),
+		NumOfPages: numOfPages,
+		Page:       page,
 	})
 }

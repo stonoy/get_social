@@ -4,12 +4,21 @@ values ($1, $2, $3, $4, $5)
 returning *;
 
 -- name: GetPostById :one
-select * from posts where id = $1;
+select posts.*, users.name from posts
+inner join users
+on posts.author = users.id
+where posts.id = $1;
 
 -- name: GetPostsByIUser :many
-select * from posts 
-where author = $1
+select posts.*, users.name from posts
+inner join users
+on posts.author = users.id
+where posts.author = $1
+order by posts.created_at desc
 limit $2 offset $3;
+
+-- name: GetNumPostsByIUser :one
+select count(*) from posts where author = $1;
 
 -- name: DeletePost :one
 delete from posts where id = $1 and author = $2
@@ -23,13 +32,22 @@ where id = $2 and author = $3
 returning *;
 
 -- name: PostSuggestions :many
-select * from posts
-where author in (
+select posts.*, users.name from posts
+inner join users
+on posts.author = users.id
+where posts.author in (
     select person from follows
     where follower = $1
 ) and posts.created_at between $2 and $3
-order by posts.updated_at
+order by posts.created_at desc
 limit $4 offset $5;
+
+-- name: NumPostSuggestions :one
+select count(*) from posts
+where author in (
+    select person from follows
+    where follower = $1
+);
 
 -- name: HandlePostLike :one
 update posts

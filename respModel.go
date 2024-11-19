@@ -26,6 +26,19 @@ type Post struct {
 	UpdatedAt time.Time `json:"updated_at"`
 	Content   string    `json:"content"`
 	Author    uuid.UUID `json:"author"`
+	Likes     int32     `json:"likes"`
+	Comments  int32     `json:"comments"`
+}
+
+type PostWithUser struct {
+	ID        uuid.UUID `json:"id"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+	Content   string    `json:"content"`
+	Author    uuid.UUID `json:"author"`
+	Likes     int32     `json:"likes"`
+	Comments  int32     `json:"comments"`
+	Name      string    `json:"name"`
 }
 
 type Comment struct {
@@ -61,16 +74,37 @@ type MyFollowersRow struct {
 	Name   string    `json:"name"`
 }
 
-func postDbToResp(posts []internal.Post) []Post {
-	final := []Post{}
+func postDbToResp1(posts []internal.GetPostsByIUserRow) []PostWithUser {
+	final := []PostWithUser{}
 
 	for _, post := range posts {
-		final = append(final, Post{
+		final = append(final, PostWithUser{
 			ID:        post.ID,
 			CreatedAt: post.CreatedAt,
 			UpdatedAt: post.UpdatedAt,
 			Content:   post.Content,
 			Author:    post.Author,
+			Likes:     post.Likes,
+			Comments:  post.Comments,
+			Name:      post.Name,
+		})
+	}
+	return final
+}
+
+func postDbToResp2(posts []internal.PostSuggestionsRow) []PostWithUser {
+	final := []PostWithUser{}
+
+	for _, post := range posts {
+		final = append(final, PostWithUser{
+			ID:        post.ID,
+			CreatedAt: post.CreatedAt,
+			UpdatedAt: post.UpdatedAt,
+			Content:   post.Content,
+			Author:    post.Author,
+			Likes:     post.Likes,
+			Comments:  post.Comments,
+			Name:      post.Name,
 		})
 	}
 	return final

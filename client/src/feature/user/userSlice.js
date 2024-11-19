@@ -46,6 +46,7 @@ const userSlice = createSlice({
             state.submitting = false
             state.success = false
             state.errorMsg = ""
+            localStorage.setItem("user", JSON.stringify(state))
         }
     },
     extraReducers: (builder) => {
