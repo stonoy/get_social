@@ -1,14 +1,84 @@
 import {createSlice, createAsyncThunk} from "@reduxjs/toolkit"
 import { axiosBase } from "../../utils"
 import {toast} from 'react-toastify'
+import { getPosts } from "../posts/postsSlice"
 
 const initialState = {
     submitting: false,
     errorMsg: "",
     token: "",
     user: {},
-    success: false
+    success: false,
+    loading: false,
+    followSuggestions: [],
+    searchName: "",
+    searchUsers: [],
+    profile: {},
+    profileLoading: false
 }
+
+export const getProfile = createAsyncThunk("user/getProfile", 
+    async (userId, thunkAPI) => {
+        try {
+            const resp = await axiosBase.get(`/getusersdetails/${userId}`)
+
+            return resp?.data
+        } catch (error) {
+            return thunkAPI.rejectWithValue(error?.response)
+        }
+    }
+)
+
+export const getUsers = createAsyncThunk("user/getUsers",
+    async ({name, location}, thunkAPI) => {
+        try {
+
+            const resp = await axiosBase.get(`/getusers?name=${name || ""}&location=${location || ""}`)
+
+            return resp?.data
+        } catch (error) {
+            return thunkAPI.rejectWithValue(error?.response)
+        }
+    }
+)
+
+export const followPerson = createAsyncThunk("user/followPerson",
+    async (person, thunkAPI) => {
+        try {
+            const {token} = thunkAPI.getState().user
+            const resp = await axiosBase.post("/followpersons",{person}, {
+                headers : {
+                    "Authorization" : `Bearer ${token}`
+                }
+            })
+
+            // refetch follow suggestions
+            thunkAPI.dispatch(getFollowSuggestions())
+            thunkAPI.dispatch(getPosts("/getpostsuggestions"))
+
+            return resp?.data
+        } catch (error) {
+            return thunkAPI.rejectWithValue(error?.response)
+        }
+    }
+)
+
+export const getFollowSuggestions = createAsyncThunk("user/getFollowSuggestions",
+    async (_, thunkAPI) => {
+        try {
+            const {token} = thunkAPI.getState().user
+            const resp = await axiosBase.get("/followsuggestions", {
+                headers : {
+                    "Authorization" : `Bearer ${token}`
+                }
+            })
+
+            return resp?.data
+        } catch (error) {
+            return thunkAPI.rejectWithValue(error?.response)
+        }
+    }
+)
 
 export const login = createAsyncThunk("user/login",
     async(data, thunkAPI) => {
@@ -47,6 +117,9 @@ const userSlice = createSlice({
             state.success = false
             state.errorMsg = ""
             localStorage.setItem("user", JSON.stringify(state))
+        },
+        setSearchName : (state, {payload}) => {
+            state.searchName = payload
         }
     },
     extraReducers: (builder) => {
@@ -80,10 +153,44 @@ const userSlice = createSlice({
             state.success = false
             toast.error(payload?.data?.msg)
             state.errorMsg = payload?.data?.msg
+        }).addCase(getFollowSuggestions.pending, (state, {payload}) => {
+            state.loading = true
+        }).addCase(getFollowSuggestions.fulfilled, (state, {payload}) => {
+            state.loading = false
+            state.followSuggestions = payload?.follow_suggestions
+        }).addCase(getFollowSuggestions.rejected, (state, {payload}) => {
+            state.loading = false
+            toast.error(payload?.data?.msg)
+        }).addCase(followPerson.pending, (state, {payload}) => {
+            state.submitting = true
+        }).addCase(followPerson.fulfilled, (state, {payload}) => {
+            state.submitting = false
+        }).addCase(followPerson.rejected, (state, {payload}) => {
+            state.submitting = false
+            toast.error(payload?.data?.msg)
+        }).addCase(getUsers.pending, (state, {payload}) => {
+            state.loading = true
+        }).addCase(getUsers.fulfilled, (state, {payload}) => {
+            state.loading = false
+            // state.followSuggestions = payload?.follow_suggestions
+            state.searchUsers = payload?.user
+        }).addCase(getUsers.rejected, (state, {payload}) => {
+            state.loading = false
+            toast.error(payload?.data?.msg)
+        }).addCase(getProfile.pending, (state, {payload}) => {
+            state.profileLoading = true
+        }).addCase(getProfile.fulfilled, (state, {payload}) => {
+            state.profileLoading = false
+            // state.followSuggestions = payload?.follow_suggestions
+            // console.log(payload)
+            state.profile = payload
+        }).addCase(getProfile.rejected, (state, {payload}) => {
+            state.profileLoading = false
+            toast.error(payload?.data?.msg)
         })
     }
 })
 
-export const {setUser, logout, setToDefault} = userSlice.actions
+export const {setUser, logout, setToDefault,setSearchName} = userSlice.actions
 
 export default userSlice.reducer

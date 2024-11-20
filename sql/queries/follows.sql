@@ -12,9 +12,11 @@ select users.id, users.name, count(follows.*) as followers
 from follows
 inner join users
 on follows.person = users.id
-where follows.follower != $1
-group by users.id
-limit 3;
+where follows.person not in (
+	select person from follows
+	where follows.follower = $1
+)
+group by users.id;
 
 -- name: PersonsIFollow :many
 select users.id, users.name 

@@ -1,5 +1,6 @@
 import {createBrowserRouter, RouterProvider} from 'react-router-dom'
-import {Login, Register, HomeLayOut, ErrorPage, Landing} from '../src/pages'
+import {Login, Register, HomeLayOut, ErrorPage, Landing, TimeLine, Users} from '../src/pages'
+import { User } from './components'
 
 
 const router = createBrowserRouter([
@@ -12,6 +13,14 @@ const router = createBrowserRouter([
         index: true,
         element: <Landing/>
       },
+      {
+        path: "/timeline",
+        element: <TimeLine/>
+      },
+      {
+        path: "/searchusers",
+        element: <Users/>
+      }
     ]
   },
   {

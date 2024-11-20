@@ -4,7 +4,7 @@ import {toast} from "react-toastify"
 
 const initialState = {
     posts : [],
-    followSuggestions: [],
+    
     loading: false,
     success: false,
     numOfPages: 0,
@@ -12,6 +12,29 @@ const initialState = {
     posting: false,
     likeCommentBtn: false
 }
+
+
+
+export const updatePost = createAsyncThunk("posts/updatePost",
+    async ({postId, content}, thunkAPI) => {
+        try {
+            const {token} = thunkAPI.getState().user
+            const resp = await axiosBase.put(`/updateposts/${postId}`, {content}, {
+                headers : {
+                    "Authorization" : `Bearer ${token}`
+                }
+            })
+
+            // fetch current posts
+            const {page} = thunkAPI.getState().posts
+            thunkAPI.dispatch(getPosts(`/getpostsbyuser?page=${page}`))
+            
+            return resp?.data
+        } catch (error) {
+            return thunkAPI.rejectWithValue(error?.response)
+        }
+    }
+)
 
 export const handleLikeAsync = createAsyncThunk("posts/handleLikeAsync",
     async ({postId, path}, thunkAPI) => {
@@ -50,6 +73,23 @@ export const createPost = createAsyncThunk("posts/createPost",
         }
     }
 )
+
+// export const getUserPosts = createAsyncThunk("posts/getUserPosts", 
+//     async (path, thunkAPI) => {
+//         try {
+//             const {token} = thunkAPI.getState().user
+//             const resp = await axiosBase.get(`${path}`, {
+//                 headers : {
+//                     "Authorization" : `Bearer ${token}`
+//                 }
+//             })
+
+//             return resp?.data
+//         } catch (error) {
+//             return thunkAPI.rejectWithValue(error?.response)
+//         }
+//     }
+// )
 
 export const getPosts = createAsyncThunk("posts/getPosts", 
     async (path, thunkAPI) => {
@@ -102,6 +142,13 @@ const postsSlice = createSlice({
             state.likeCommentBtn = false
         }).addCase(handleLikeAsync.rejected, (state, {payload}) => {
             state.likeCommentBtn = false
+            toast.error(payload?.data?.msg)
+        }).addCase(updatePost.pending, (state, {payload}) => {
+            state.posting = true
+        }).addCase(updatePost.fulfilled, (state, {payload}) => {
+            state.posting = false
+        }).addCase(updatePost.rejected, (state, {payload}) => {
+            state.posting = false
             toast.error(payload?.data?.msg)
         })
     }

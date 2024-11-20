@@ -6,7 +6,7 @@ const Landing = () => {
     <>
         <User />
         <Content/>
-        <FollowersList />
+        <FollowersList isBigScreen={true}/>
     </>
   )
 }

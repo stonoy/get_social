@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { createComment, getComments } from '../feature/comments/commentsSlice'
+import { createComment, deleteComment, getComments } from '../feature/comments/commentsSlice'
+import { RiDeleteBinLine } from "react-icons/ri";
 
 const CommentBox = ({postId}) => {
     const {commentsAll, loading, submitting} = useSelector(state => state.comments)
@@ -19,7 +20,7 @@ const CommentBox = ({postId}) => {
 
         if (!comment){return}
 
-        dispatch(createComment({comment, post_id:postId}))
+        dispatch(createComment({comment, post_id:postId})).then(() => commentRef.current.reset())
     }
 
   return (
@@ -32,11 +33,14 @@ const CommentBox = ({postId}) => {
                     <>
                        {commentsAll[postId].map(comment => {
                         return (
-                            <div className='flex my-2 gap-2 justify-start items-center md:my-4'>
+                            <div key={comment.id} className='flex my-2 gap-2 justify-start items-center md:my-4'>
                             <h1 className='text-xl rounded-full bg-slate-300 capitalize px-4 py-2 font-semibold'>{comment.name[0]}</h1>
+                            <div className='flex w-full justify-between items-center'>
                             <div className='flex flex-col  items-start'>
                                 <h1 className='text-md font-semibold text-slate-700'>{comment.name}</h1>
                                 <h1 className='text-sm text-slate-600'>{comment.comment}</h1>
+                            </div>
+                            <RiDeleteBinLine onClick={() => dispatch(deleteComment({id:comment.id, postId}))} className='text-sm text-red-500'/>
                             </div>
                         </div>
                         )

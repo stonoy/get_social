@@ -4,6 +4,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import { createPost, getPosts } from '../feature/posts/postsSlice'
 import Posts from './Posts'
 import Pagination from './Pagination'
+import FollowersList from './FollowersList'
 
 const Content = () => {
   const {loading, posts,numOfPages,page,posting} = useSelector(state => state.posts)
@@ -17,7 +18,7 @@ const Content = () => {
   const handlePostSubmit = (e) => {
     e.preventDefault()
     const content = new FormData(postRef.current)
-    dispatch(createPost(Object.fromEntries(content)))
+    dispatch(createPost(Object.fromEntries(content))).then(() => postRef.current.reset())
   }
   
   return (
@@ -29,10 +30,11 @@ const Content = () => {
                 <button disabled={posting} className='ml-auto px-4 py-2 bg-green-400 text-white text-lg font-semibold rounded-md'>Post</button>
             </form>
         </div>
+        <FollowersList isBigScreen={false}/>
         <div>
             {loading ? <Shimmer/>
             :
-            <Posts posts={posts} />
+            <Posts posts={posts} isTimeLine={false} />
           }
         </div>
         <Pagination path="/getpostsuggestions" numOfPages={numOfPages} page={page}/>

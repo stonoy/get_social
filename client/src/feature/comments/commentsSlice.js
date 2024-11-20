@@ -8,6 +8,26 @@ const initialState = {
     commentsAll: {}
 }
 
+export const deleteComment = createAsyncThunk("comments/deleteComment",
+    async (data, thunkAPI) => {
+        try {
+            const {token} = thunkAPI.getState().user
+            const resp = await axiosBase.delete(`/deletecomments/${data.id}`, {
+                headers : {
+                    "Authorization" : `Bearer ${token}`
+                }
+            })
+
+            // refetch new comments
+            thunkAPI.dispatch(getComments(data.postId))
+
+            return resp?.data
+        } catch (error) {
+            return thunkAPI.rejectWithValue(error?.response)
+        }
+    }
+)
+
 export const getComments = createAsyncThunk("comments/getComments",
     async (postId, thunkAPI) => {
         try {
@@ -58,11 +78,15 @@ const commentsSlice = createSlice({
         }).addCase(createComment.pending, (state, {payload}) => {
             state.submitting = true
         }).addCase(createComment.fulfilled, (state, {payload}) => {
-            
-
             state.submitting = false
-            
         }).addCase(createComment.rejected, (state, {payload}) => {
+            state.submitting = false
+            toast.error(payload?.data?.msg)
+        }).addCase(deleteComment.pending, (state, {payload}) => {
+            state.submitting = true
+        }).addCase(deleteComment.fulfilled, (state, {payload}) => {
+            state.submitting = false
+        }).addCase(deleteComment.rejected, (state, {payload}) => {
             state.submitting = false
             toast.error(payload?.data?.msg)
         })
