@@ -1,6 +1,5 @@
 import {createBrowserRouter, RouterProvider} from 'react-router-dom'
-import {Login, Register, HomeLayOut, ErrorPage, Landing, TimeLine, Users} from '../src/pages'
-import { User } from './components'
+import {Login, Register, HomeLayOut, ErrorPage, Landing, TimeLine, Users, UserProfile} from '../src/pages'
 
 
 const router = createBrowserRouter([
@@ -20,6 +19,10 @@ const router = createBrowserRouter([
       {
         path: "/searchusers",
         element: <Users/>
+      },
+      {
+        path: "/profile",
+        element: <UserProfile/>
       }
     ]
   },

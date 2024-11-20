@@ -5,7 +5,7 @@ import { getUsers, setSearchName } from '../feature/user/userSlice';
 import { useNavigate } from 'react-router-dom';
 
 const Header = () => {
-    const {token, user:{name}, searchName} = useSelector((state) => state.user)
+    const {token, profile:{user: {name}}, searchName} = useSelector((state) => state.user)
     const dispatch = useDispatch()
     const navigate = useNavigate()
 

@@ -13,9 +13,35 @@ const initialState = {
     followSuggestions: [],
     searchName: "",
     searchUsers: [],
-    profile: {},
+    profile: {
+        user : {
+            name : "Guest User"
+        }
+    },
     profileLoading: false
 }
+
+export const updateUser = createAsyncThunk("user/updateUser", 
+    async(_, thunkAPI) => {
+        try {
+            const {id, name, location, age, username, bio} = thunkAPI.getState().user.profile?.user
+            const {token} = thunkAPI.getState().user
+
+            const resp = await axiosBase.put("/updateusers", {name, location, age, username, bio}, {
+                headers : {
+                    "Authorization" : `Bearer ${token}`
+                }
+            })
+
+            // refetch new profile
+            thunkAPI.dispatch(getProfile(id))
+
+            return resp?.data
+        } catch (error) {
+            return thunkAPI.rejectWithValue(error?.response)
+        }
+    }
+)
 
 export const getProfile = createAsyncThunk("user/getProfile", 
     async (userId, thunkAPI) => {
@@ -120,6 +146,11 @@ const userSlice = createSlice({
         },
         setSearchName : (state, {payload}) => {
             state.searchName = payload
+        },
+        changeUserDetails: (state, {payload}) => {
+            const {name, value} = payload
+
+            state.profile.user[name] = value
         }
     },
     extraReducers: (builder) => {
@@ -187,10 +218,17 @@ const userSlice = createSlice({
         }).addCase(getProfile.rejected, (state, {payload}) => {
             state.profileLoading = false
             toast.error(payload?.data?.msg)
+        }).addCase(updateUser.pending, (state, {payload}) => {
+            state.submitting = true
+        }).addCase(updateUser.fulfilled, (state, {payload}) => {
+            state.submitting = false
+        }).addCase(updateUser.rejected, (state, {payload}) => {
+            state.submitting = false
+            toast.error(payload?.data?.msg)
         })
     }
 })
 
-export const {setUser, logout, setToDefault,setSearchName} = userSlice.actions
+export const {setUser, logout, setToDefault,setSearchName, changeUserDetails} = userSlice.actions
 
 export default userSlice.reducer
