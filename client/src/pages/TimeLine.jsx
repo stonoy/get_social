@@ -15,7 +15,7 @@ const TimeLine = () => {
 
     
     return (
-      <section className='p-4 bg-gray-200 h-screen'>
+      <section className='p-4 bg-gray-200 h-screen md:w-3/4'>
           <div className=''>
           
           <div>

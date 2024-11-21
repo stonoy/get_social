@@ -1,5 +1,5 @@
 import {createBrowserRouter, RouterProvider} from 'react-router-dom'
-import {Login, Register, HomeLayOut, ErrorPage, Landing, TimeLine, Users, UserProfile} from '../src/pages'
+import {Login, Register, HomeLayOut, ErrorPage, Landing, TimeLine, Users, UserProfile, AnyProfile} from '../src/pages'
 
 
 const router = createBrowserRouter([
@@ -23,6 +23,10 @@ const router = createBrowserRouter([
       {
         path: "/profile",
         element: <UserProfile/>
+      },
+      {
+        path: "/profile/:userId",
+        element: <AnyProfile/>
       }
     ]
   },

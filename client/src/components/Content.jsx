@@ -22,7 +22,7 @@ const Content = () => {
   }
   
   return (
-    <section className='p-4 bg-gray-200 h-screen'>
+    <section className='p-4 bg-gray-200 h-screen md:w-7/12'>
         <div className=''>
         <div>
             <form ref={postRef} onSubmit={handlePostSubmit} className='flex flex-col gap-4'>

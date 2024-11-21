@@ -15,7 +15,7 @@ const HomeLayOut = () => {
   return (
     <main>
       <Header/>
-      <section className='md:w-9/12 md:mx-auto'>
+      <section className='md:w-10/12 md:mx-auto md:flex md:gap-4 md:justify-center'>
         <Outlet/>
       </section>
     </main>

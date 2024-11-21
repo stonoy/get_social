@@ -6,6 +6,7 @@ import { LiaCommentSolid } from "react-icons/lia";
 import { BsThreeDotsVertical } from "react-icons/bs";
 import { handleLikeAsync, updatePost } from '../feature/posts/postsSlice';
 import CommentBox from './CommentBox';
+import UserNameFirst from './UserNameFirst';
 
 const Posts = ({posts, isTimeLine}) => {
     const [openCommentBoxId, setOpenCommentBoxId] = useState("")
@@ -59,7 +60,7 @@ const Posts = ({posts, isTimeLine}) => {
                 <article key={post.id} className='flex flex-col relative gap-2 bg-white my-4 shadow-md rounded-md p-2 md:my-6 md:p-4 hover:shadow-xl'>
                     <div className='flex justify-between items-center'>
                     <div className='flex gap-2 justify-start items-center'>
-                        <h1 className='text-xl rounded-full bg-slate-300 capitalize px-4 py-2 font-semibold'>{post.name[0]}</h1>
+                        <UserNameFirst letter={post.name[0]} id={post.author} />
                         <div className='flex flex-col  items-start'>
                             <h1 className='text-sm text-slate-700'>{post.name}</h1>
                             <h1 className='text-sm text-slate-600'>{dayjs(post.created_at).toString()}</h1>
@@ -82,7 +83,7 @@ const Posts = ({posts, isTimeLine}) => {
                     <div className='flex px-2 justify-between items-center cursor-pointer'>
                         <div className='flex w-1/2 gap-1 bg-grey-300 border-r-2 border-gray-400 items-center justify-center'>
                         <h1 className='text-md' > {post.likes}</h1>
-                        <button disabled={likeCommentBtn} onClick={() => dispatch(handleLikeAsync({path: "/getpostsuggestions", postId: post.id}))} className='text-md'> <AiTwotoneLike />
+                        <button disabled={likeCommentBtn} onClick={() => dispatch(handleLikeAsync({path: "/getpostsbyuser", postId: post.id}))} className='text-md'> <AiTwotoneLike />
                         </button>
                         </div>
                         <div className='flex w-1/2 gap-1 bg-grey-300 items-center justify-center'>
